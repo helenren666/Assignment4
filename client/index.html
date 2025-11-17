@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Chat Application</title>
+  </head>
+  <body>
+    <section id="log"></section>
+    <input id="message_box"></input>
+    <button id="send_button">Send</button>
+
+    <script>
+      let socket = new WebSocket("ws://149.31.230.26:3000/");
+
+      socket.addEventListener("message", (event) => {
+        attachMessage(event.data);
+      });
+
+      let sendButton = document.getElementById("send_button");
+      let messageBox = document.getElementById("message_box");
+      
+      sendButton.addEventListener("click", () => {
+        if (messageBox.value !== "") {
+          socket.send(messageBox.value);
+          messageBox.value = "";
+        }
+      });
+
+      function attachMessage(message) {
+        let log = document.getElementById("log");
+        log.innerHTML += `
+          <div class="chat">
+            <p>${message}</p>
+          </div>
+        `;
+      }
+    </script>
+  </body>
+</html>
