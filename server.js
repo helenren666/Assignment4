@@ -33,16 +33,21 @@ server.ws("/", (client) => {
 
   clients[id] = client;
 
-  client.on("client_message", (dataString) => {
-    let { content } = JSON.stringify(dataString);
-    let message = { content, time: Date.now(), sender: id };
+  client.on("message", (dataString) => {
+    let event = JSON.parse(dataString);
 
-    messages.push(message);
+    if (event.type === "client_message") {
+      let { content } = event;
 
-    broadcast({
-      type: "server_message",
-      ...message,
-    });
+      let message = { content, time: Date.now(), sender: id };
+
+      messages.push(message);
+
+      broadcast({
+        type: "server_message",
+        ...message,
+      });
+    }
   });
 
   client.on("close", () => {
