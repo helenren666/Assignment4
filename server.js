@@ -10,7 +10,7 @@ const server = express();
 // Added websocket features
 expressWs(server);
 server.use(express.static("dist"));
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 let clients = {};
 let clientNames = {};

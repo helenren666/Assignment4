@@ -113,8 +113,14 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    let socket = new WebSocket('ws://' + window.location.hostname + ':3000');
-    socketRef.current = socket;
+    if (window.location.protocol === "https:") {
+      let socket = new WebSocket('wss://' + window.location.host);
+      
+    } else {
+      let socket = new WebSocket('ws://' + window.location.host);
+      
+    }
+     socketRef.current = socket;
 
     function handler({ data }) {
       let event = JSON.parse(data);
