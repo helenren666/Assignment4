@@ -291,7 +291,7 @@ export function App() {
     }
 
     try {
-      let response = await fetch("http://" + window.location.hostname + ":3000/api/validate-drop", {
+      let response = await fetch("/api/validate-drop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
