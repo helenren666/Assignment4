@@ -67,6 +67,22 @@ export function App() {
   let [catAwake, setCatAwake] = useState(false);
   let wakeAudioRef = useRef(null);
 
+  let log = (text, tone = "success") => {
+    setLogs((prev) => [{ id: Date.now(), text, tone }, ...prev].slice(0, 6));
+  };
+
+  const resetBoard = useCallback(
+    (triggeredBy) => {
+      let announcer = (triggeredBy || "Someone").trim() || "Someone";
+      setPlacedItems({});
+      setHasPlaced(false);
+      setCatAwake(false);
+      setDragging(null);
+      setLogs([{ id: Date.now(), text: `${announcer} started a new round`, tone: "success" }]);
+    },
+    []
+  );
+
   useEffect(() => {
     let link = document.createElement("link");
     link.rel = "stylesheet";
@@ -97,7 +113,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    let socket = new WebSocket("ws://localhost:3000/");
+    let socket = new WebSocket('ws://' + window.location.hostname + ':3000');
     socketRef.current = socket;
 
     function handler({ data }) {
@@ -156,6 +172,12 @@ export function App() {
           `${event.itemKey?.replace(".png", "") ?? "item"} is already on the cat`,
           "warn"
         );
+      } else if (event.type === "game_reset") {
+        let nameFromEvent =
+          event.userName ||
+          namesRef.current[event.by] ||
+          (event.by != null ? `User ${event.by}` : "Someone");
+        resetBoard(nameFromEvent);
       }
     }
 
@@ -190,10 +212,6 @@ export function App() {
       setHasPlaced(true);
     }
   }, [placedItems]);
-
-  let log = (text, tone = "success") => {
-    setLogs((prev) => [{ id: Date.now(), text, tone }, ...prev].slice(0, 6));
-  };
 
   useEffect(() => {
     nameRef.current = playerName;
@@ -266,7 +284,7 @@ export function App() {
     }
 
     try {
-      let response = await fetch("http://localhost:3000/api/validate-drop", {
+      let response = await fetch("http://" + window.location.hostname + ":3000/api/validate-drop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -323,6 +341,20 @@ export function App() {
     setHasStarted(true);
     if (idRef.current != null && finalName) {
       setNamesById((prev) => ({ ...prev, [idRef.current]: finalName }));
+    }
+  }
+
+  function handlePlayAgain() {
+    if (!catAwake) return;
+    let displayName =
+      (playerName || "").trim() ||
+      namesById[id] ||
+      (id != null ? `User ${id}` : "Someone");
+    resetBoard(displayName);
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({ type: "reset_game" }));
+    } else {
+      log("Not connected to the server; you restarted locally only", "warn");
     }
   }
 
@@ -531,6 +563,37 @@ export function App() {
           );
         })}
       </div>
+
+      {catAwake && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: 26,
+            transform: "translateX(-50%)",
+            zIndex: 7,
+            pointerEvents: "none",
+          }}
+        >
+          <button
+            onClick={handlePlayAgain}
+            style={{
+              pointerEvents: "auto",
+              padding: "14px 22px",
+              borderRadius: "14px",
+              border: "none",
+              background: "linear-gradient(120deg, #f472b6, #fb7185)",
+              color: "#fff",
+              fontWeight: 800,
+              fontSize: "16px",
+              cursor: "pointer",
+              boxShadow: "0 14px 38px rgba(244, 114, 182, 0.35)",
+            }}
+          >
+            Play again
+          </button>
+        </div>
+      )}
 
       {!hasStarted && (
         <div

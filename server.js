@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 const server = express();
 // Added websocket features
 expressWs(server);
-
+server.use(express.static("dist"));
 const port = 3000;
 
 let clients = {};
@@ -121,6 +121,10 @@ server.ws("/", (client) => {
         userId: id,
         userName,
       });
+    } else if (event.type === "reset_game") {
+      placedItems = {};
+      let userName = clientNames[id] || formatName("", id);
+      broadcast({ type: "game_reset", by: id, userName });
     }
   });
 
